@@ -1,38 +1,35 @@
 pipeline {
     agent any
 
-    stages {
-
-        stage('Install Dependencies') {
-            steps {
-                echo 'Installing dependencies...'
-                sh 'npm install'
-            }
-        }
-
-        stage('Build') {
-            steps {
-                echo 'Building application...'
-            }
-        }
-
-        stage('Run App') {
-            steps {
-                echo 'Starting application...'
-                sh '''
-                pkill -f "node server.js" || true
-                nohup node server.js > output.log 2>&1 &
-                '''
-            }
-        }
+    environment {
+        DOCKER_IMAGE = "kalpesh/task-manager"
     }
 
-    post {
-        success {
-            echo 'Pipeline executed successfully 🚀'
+    stages {
+
+        stage('Clone') {
+            steps {
+                git branch: 'main', url: 'https://github.com/kalpeshghorse/devops-project.git'
+            }
         }
-        failure {
-            echo 'Pipeline failed ❌'
+
+        stage('Build Docker Image') {
+            steps {
+                sh 'docker build -t $DOCKER_IMAGE .'
+            }
+        }
+
+        stage('Push to Docker Hub') {
+            steps {
+                sh 'docker push $DOCKER_IMAGE'
+            }
+        }
+
+        stage('Deploy to Kubernetes') {
+            steps {
+                sh 'kubectl apply -f deployment.yaml'
+                sh 'kubectl apply -f service.yaml'
+            }
         }
     }
 }
