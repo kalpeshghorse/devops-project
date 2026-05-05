@@ -1,2 +1,5 @@
 node_modules/
+*.war
+*.deb
+*.log
 package-lock.json
